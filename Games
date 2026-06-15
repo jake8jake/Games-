@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Dodger</title>
+
+<style>
+body {
+    margin: 0;
+    background: #000;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+h1 {
+    margin: 10px;
+}
+
+canvas {
+    background: #111;
+    border: 2px solid cyan;
+    touch-action: none;
+}
+
+#score {
+    font-size: 24px;
+    margin: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🚀 Space Dodger</h1>
+<div id="score">Score: 0</div>
+
+<canvas id="game" width="400" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const player = {
+    x: 180,
+    y: 540,
+    width: 40,
+    height: 40
+};
+
+let asteroids = [];
+let score = 0;
+let gameOver = false;
+
+// Touch controls
+canvas.addEventListener("touchmove", e => {
+    e.preventDefault();
+
+    const rect = canvas.getBoundingClientRect();
+    player.x =
+        e.touches[0].clientX -
+        rect.left -
+        player.width / 2;
+
+    if (player.x < 0) player.x = 0;
+    if (player.x > canvas.width - player.width) {
+        player.x = canvas.width - player.width;
+    }
+}, { passive: false });
+
+function createAsteroid() {
+    asteroids.push({
+        x: Math.random() * (canvas.width - 30),
+        y: -30,
+        size: 30,
+        speed: 3 + Math.random() * 3
+    });
+}
+
+function drawPlayer() {
+    ctx.fillStyle = "cyan";
+    ctx.fillRect(
+        player.x,
+        player.y,
+        player.width,
+        player.height
+    );
+}
+
+function drawAsteroids() {
+    ctx.fillStyle = "red";
+
+    asteroids.forEach(a => {
+        ctx.fillRect(a.x, a.y, a.size, a.size);
+    });
+}
+
+function update() {
+    if (gameOver) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (Math.random() < 0.03) {
+        createAsteroid();
+    }
+
+    asteroids.forEach((a, index) => {
+        a.y += a.speed;
+
+        // Collision
+        if (
+            player.x < a.x + a.size &&
+            player.x + player.width > a.x &&
+            player.y < a.y + a.size &&
+            player.y + player.height > a.y
+        ) {
+            gameOver = true;
+
+            setTimeout(() => {
+                if (confirm(
+                    "Game Over!\nScore: " +
+                    score +
+                    "\n\nPlay again?"
+                )) {
+                    location.reload();
+                }
+            }, 100);
+
+            return;
+        }
+
+        // Passed asteroid
+        if (a.y > canvas.height) {
+            asteroids.splice(index, 1);
+
+            score++;
+            document.getElementById("score").textContent =
+                "Score: " + score;
+        }
+    });
+
+    drawPlayer();
+    drawAsteroids();
+
+    requestAnimationFrame(update);
+}
+
+update();
+</script>
+
+</body>
+</html>
